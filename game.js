@@ -1,12 +1,13 @@
-// game.js
+import PowerUp from './PowerUp.js'; // Ensure this path is correct
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let player = { x: 375, y: 550, width: 50, height: 50, speed: 75 };
+let player = { x: 375, y: 550, width: 50, height: 50, speed: 45 };
 let bullets = [];
 let enemies = [];
 let score = 0;
+let powerUps = [];
 
 // Function to draw the player
 function drawPlayer() {
@@ -30,23 +31,69 @@ function drawEnemies() {
     });
 }
 
+// Function to draw power-ups
+function drawPowerUps() {
+    powerUps.forEach(powerUp => {
+        powerUp.draw(ctx);
+    });
+}
+
+// Function to update power-ups
+function updatePowerUps() {
+    if (Math.random() < 0.01) { // 1% chance to spawn a power-up each frame
+        powerUps.push(new PowerUp(Math.random() * (canvas.width - 20), 0));
+    }
+
+    powerUps.forEach((powerUp, index) => {
+        powerUp.update();
+        if (powerUp.y > canvas.height) {
+            powerUps.splice(index, 1); // Remove if off screen
+        }
+    });
+}
+
+// Function to detect power-up collisions
+function detectPowerUpCollisions() {
+    powerUps.forEach((powerUp, index) => {
+        if (
+            player.x < powerUp.x + powerUp.width &&
+            player.x + player.width > powerUp.x &&
+            player.y < powerUp.y + powerUp.height &&
+            player.y + player.height > powerUp.y
+        ) {
+            // Collision detected
+            if (powerUp.type === 'life') {
+                console.log("Life gained!");
+            } else if (powerUp.type === 'score') {
+                score += 50; // Increase score
+                console.log("Score increased!");
+            }
+            powerUps.splice(index, 1); // Remove power-up
+        }
+    });
+}
+
 // Game loop
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawPlayer();
     drawBullets();
     drawEnemies();
+    drawPowerUps(); // Draw power-ups
     updateBullets();
     updateEnemies();
+    updatePowerUps(); // Update power-ups
     detectCollisions();
-    requestAnimationFrame(gameLoop);
+    detectPowerUpCollisions(); // Check for power-up collisions
     drawScore();
+    requestAnimationFrame(gameLoop);
 }
 
-function drawScore () {
+// Function to draw the score
+function drawScore() {
     ctx.font = '16px Arial';
     ctx.fillStyle = 'black';
-    ctx.fillText ('Score: ' + score, 10, 20);
+    ctx.fillText('Score: ' + score, 10, 20);
 }
 
 // Handle shooting
